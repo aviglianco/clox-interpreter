@@ -6,7 +6,7 @@ Un intérprete del lenguaje Lox hecho en C.
 
 Lox es un lenguaje de programación dinámico, de propósito general, diseñado con fines educativos para ilustrar la construcción de intérpretes y máquinas virtuales. Es un lenguaje con soporte para funciones de primera clase y clausuras. Su sintaxis está inspirada en Python.
 
-Lox fue diseñado por Robert Nystrom como parte del libro Crafting Interpreters.
+Lox fue diseñado por Robert Nystrom como parte del libro [Crafting Interpreters](https://craftinginterpreters.com/contents.html).
 
 ### Gramática de Lox
 
@@ -102,3 +102,7 @@ Para ejecutar el contenido de un archivo `.lox` línea por línea, ejecutar:
 ```bash
 ./clox [script.lox]
 ```
+
+### Adicional
+
+En el siguiente repositorio se encuentra la [implementación de jLox](https://github.com/aviglianco/jlox-interpreter) un intérprete de tipo "tree-walk" implementado en Java para el lenguaje Lox, pero extendido con soporte para objetos.
