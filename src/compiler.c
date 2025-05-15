@@ -56,7 +56,6 @@ typedef struct Compiler {
     struct Compiler *enclosing;
     ObjFunction *function;
     FunctionType type;
-
     Local locals[UINT8_COUNT];
     int localCount;
     Upvalue upvalues[UINT8_COUNT];
@@ -65,7 +64,6 @@ typedef struct Compiler {
 
 Parser parser;
 Compiler *current = NULL;
-Chunk *compilingChunk;
 
 static Chunk *currentChunk() { return &current->function->chunk; }
 
@@ -146,7 +144,10 @@ static int emitJump(uint8_t instruction) {
     return currentChunk()->count - 2;
 }
 
-static void emitReturn() { emitByte(OP_RETURN); }
+static void emitReturn() {
+    emitByte(OP_NIL);
+    emitByte(OP_RETURN);
+}
 
 static uint8_t makeConstant(Value value) {
     int constant = addConstant(currentChunk(), value);
@@ -196,12 +197,11 @@ static void initCompiler(Compiler *compiler, FunctionType type) {
 static ObjFunction *endCompiler() {
     emitReturn();
     ObjFunction *function = current->function;
-
 #ifdef DEBUG_PRINT_CODE
     if (!parser.hadError) {
         disassembleChunk(currentChunk(), function->name != NULL
                                              ? function->name->chars
-                                             : "script");
+                                             : "<script>");
     }
 #endif
 
@@ -357,12 +357,12 @@ static int resolveUpvalue(Compiler *compiler, Token *name) {
 
     int local = resolveLocal(compiler->enclosing, name);
     if (local != -1) {
+        compiler->enclosing->locals[local].isCaptured = true;
         return addUpvalue(compiler, (uint8_t)local, true);
     }
 
     int upvalue = resolveUpvalue(compiler->enclosing, name);
     if (upvalue != -1) {
-        compiler->enclosing->locals[local].isCaptured = true;
         return addUpvalue(compiler, (uint8_t)upvalue, false);
     }
 
@@ -491,7 +491,7 @@ static void unary(bool canAssign) {
 }
 
 ParseRule rules[] = {
-    [TOKEN_LEFT_PAREN] = {grouping, call, PREC_NONE},
+    [TOKEN_LEFT_PAREN] = {grouping, call, PREC_CALL},
     [TOKEN_RIGHT_PAREN] = {NULL, NULL, PREC_NONE},
     [TOKEN_LEFT_BRACE] = {NULL, NULL, PREC_NONE},
     [TOKEN_RIGHT_BRACE] = {NULL, NULL, PREC_NONE},
@@ -613,7 +613,7 @@ static void funDeclaration() {
 }
 
 static void varDeclaration() {
-    uint8_t global = parseVariable("Expect variable name.");
+    uint8_t global = parseVariable("Expected variable name.");
 
     if (match(TOKEN_EQUAL)) {
         expression();

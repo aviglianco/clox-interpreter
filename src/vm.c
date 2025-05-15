@@ -19,7 +19,7 @@ static void resetStack() {
     vm.stackTop = vm.stack;
     vm.frameCount = 0;
     vm.openUpvalues = NULL;
-};
+}
 
 static void runtimeError(const char *format, ...) {
     va_list args;
@@ -32,7 +32,7 @@ static void runtimeError(const char *format, ...) {
         CallFrame *frame = &vm.frames[i];
         ObjFunction *function = frame->closure->function;
         size_t instruction = frame->ip - function->chunk.code - 1;
-        fprintf(stderr, "[line %d] in", function->chunk.lines[instruction]);
+        fprintf(stderr, "[line %d] in ", function->chunk.lines[instruction]);
         if (function->name == NULL) {
             fprintf(stderr, "script\n");
         } else {
@@ -103,20 +103,17 @@ static bool callValue(Value callee, int argCount) {
         switch (OBJ_TYPE(callee)) {
             case OBJ_CLOSURE:
                 return call(AS_CLOSURE(callee), argCount);
-            case OBJ_FUNCTION: {
-                ObjClosure *closure = newClosure(AS_FUNCTION(callee));
-                push(OBJ_VAL(closure));
-                return call(closure, argCount);
-            }
+            case OBJ_FUNCTION:
+                return call(AS_FUNCTION(callee), argCount);
             case OBJ_NATIVE: {
                 NativeFn native = AS_NATIVE(callee);
                 Value result = native(argCount, vm.stackTop - argCount);
-                vm.stackTop -= argCount;
+                vm.stackTop -= argCount + 1;
                 push(result);
                 return true;
             }
             default:
-                break; // Non-callable object type.
+                break;
         }
     }
     runtimeError("Can only call functions.");
@@ -229,7 +226,6 @@ static InterpretResult run() {
             case OP_GET_LOCAL: {
                 uint8_t slot = READ_BYTE();
                 push(frame->slots[slot]);
-                push(vm.stack[slot]);
                 break;
             }
             case OP_SET_LOCAL: {

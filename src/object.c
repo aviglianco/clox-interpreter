@@ -33,6 +33,15 @@ ObjClosure *newClosure(ObjFunction *function) {
     return closure;
 }
 
+static ObjString *allocateString(char *chars, int length, uint32_t hash) {
+    ObjString *string = ALLOCATE_OBJ(ObjString, OBJ_STRING);
+    string->length = length;
+    string->chars = chars;
+    string->hash = hash;
+    tableSet(&vm.strings, string, NIL_VAL);
+    return string;
+}
+
 ObjFunction *newFunction() {
     ObjFunction *function = ALLOCATE_OBJ(ObjFunction, OBJ_FUNCTION);
     function->arity = 0;
@@ -46,15 +55,6 @@ ObjNative *newNative(NativeFn function) {
     ObjNative *native = ALLOCATE_OBJ(ObjNative, OBJ_NATIVE);
     native->function = function;
     return native;
-}
-
-static ObjString *allocateString(char *chars, int length, uint32_t hash) {
-    ObjString *string = ALLOCATE_OBJ(ObjString, OBJ_STRING);
-    string->length = length;
-    string->chars = chars;
-    string->hash = hash;
-    tableSet(&vm.strings, string, NIL_VAL);
-    return string;
 }
 
 static uint32_t hashString(const char *key, int length) {
@@ -101,9 +101,10 @@ ObjUpvalue *newUpvalue(Value *slot) {
 
 static void printFunction(ObjFunction *function) {
     if (function->name == NULL) {
-        printf("script");
+        printf("<script>");
         return;
     }
+
     printf("<fn %s>", function->name->chars);
 }
 
